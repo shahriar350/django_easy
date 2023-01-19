@@ -1,0 +1,49 @@
+class RelatedUUIDField(serializers.Field):
+
+    def get_attribute(self, instance):
+        if not self.required:
+            raise SkipField()
+        if self.allow_null:
+            return None
+        return instance
+
+    def __init__(self, model, many: bool = False, response_field: Union[str, list] = 'name', required: bool = True,
+                 allow_null=False):
+        super().__init__()
+        self.model = model
+        self.many = many
+        self.response_field = response_field
+        self.required = required
+        self.allow_null = allow_null
+
+    def to_representation(self, instance):
+        if self.many:
+            ab = []
+            for i in instance:
+                if isinstance(self.response_field, list):
+                    data = {}
+                    for field in self.response_field:
+                        data[field] = i.__dict__[field]
+                    ab.append(data)
+                else:
+                    ab.append(i.__dict__[self.response_field])
+            return ab
+        else:
+            return instance.__dict__[self.response_field]
+
+    def to_internal_value(self, data):
+        if self.many:
+            res = []
+            for i in data:
+                try:
+                    mod = self.model.objects.filter(uuid=i).first()
+                    res.append(mod)
+                except self.model.DoesNotExist:
+                    raise ValidationError("Invalid data")
+
+        else:
+            try:
+                res = self.model.objects.filter(uuid=data).first()
+            except self.model.DoesNotExist:
+                raise ValidationError("Invalid data")
+        return res
