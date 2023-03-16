@@ -1,0 +1,4 @@
+projectile/**/migrations/**
+!projectile/**/migrations
+!projectile/**/migrations/__init__.py
+!projectile/**/migrations/0001_initial.py
